@@ -1,0 +1,1483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0d0d0f">
+<title>BrainBase</title>
+
+<style>
+:root {
+  --bg: #0d0d0f;
+  --surface: #141416;
+  --surface2: #1c1c1f;
+  --surface3: #242428;
+  --border: #2a2a2f;
+  --accent: #c8f560;
+  --accent2: #60c8f5;
+  --accent3: #f560c8;
+  --text: #f0f0f2;
+  --text2: #9090a0;
+  --text3: #5a5a6a;
+  --danger: #ff6060;
+  --warning: #f5a623;
+  --success: #60f5a6;
+  --r: 14px;
+  --r-sm: 10px;
+  --tab-h: 72px;
+  --header-h: 60px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  visibility: visible;
+  font-family: 'Courier New', Courier, monospace;
+  background: var(--bg);
+  color: var(--text);
+  overscroll-behavior: none;
+}
+
+/* ── LAYOUT ── */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  background:
+    radial-gradient(ellipse 70% 40% at 90% 0%, rgba(200,245,96,0.05) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 60% at 5% 90%, rgba(96,200,245,0.04) 0%, transparent 60%),
+    var(--bg);
+}
+
+/* ── TOP HEADER ── */
+.top-bar {
+  flex-shrink: 0;
+  height: calc(var(--header-h) + var(--safe-top));
+  padding-top: var(--safe-top);
+  background: rgba(20,20,22,0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 20px;
+  padding-right: 16px;
+  position: relative;
+  z-index: 10;
+}
+
+.logo {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: -0.5px;
+}
+.logo span { color: var(--accent); }
+
+.top-bar-right { display: flex; align-items: center; gap: 10px; }
+
+.clock {
+  font-size: 12px;
+  color: var(--text2);
+  font-variant-numeric: tabular-nums;
+}
+
+.bell-btn {
+  position: relative;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  transition: background 0.15s;
+  -webkit-user-select: none;
+}
+.bell-btn:active { background: var(--surface3); }
+
+.bell-badge {
+  position: absolute;
+  top: -2px; right: -2px;
+  min-width: 18px; height: 18px;
+  background: var(--accent);
+  color: var(--bg);
+  border-radius: 9px;
+  font-size: 10px;
+  font-weight: 800;
+  display: none;
+  align-items: center; justify-content: center;
+  padding: 0 4px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ── SCROLL AREA ── */
+.scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  padding: 20px 16px;
+  padding-bottom: calc(var(--tab-h) + var(--safe-bottom) + 20px);
+}
+
+/* ── PAGES ── */
+.page { display: none; }
+.page.active { display: block; animation: slideUp 0.22s ease; }
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── BOTTOM TAB BAR ── */
+.tab-bar {
+  flex-shrink: 0;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: calc(var(--tab-h) + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+  background: rgba(20,20,22,0.97);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  display: flex;
+  z-index: 10;
+}
+
+.tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  color: var(--text3);
+  transition: color 0.15s;
+  padding-top: 8px;
+  -webkit-user-select: none;
+  position: relative;
+}
+.tab:active { opacity: 0.7; }
+.tab.active { color: var(--accent); }
+.tab .tab-icon { font-size: 22px; line-height: 1; }
+.tab .tab-label { font-size: 10px; letter-spacing: 0.3px; }
+.tab .tab-dot {
+  position: absolute;
+  top: 6px;
+  right: calc(50% - 14px);
+  width: 7px; height: 7px;
+  background: var(--accent);
+  border-radius: 50%;
+  display: none;
+}
+.tab .tab-dot.show { display: block; }
+
+/* ── TYPOGRAPHY ── */
+.page-title {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-bottom: 4px;
+}
+.page-subtitle { font-size: 13px; color: var(--text2); margin-bottom: 20px; }
+.section-label {
+  font-size: 11px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin: 20px 0 10px;
+}
+
+/* ── CARDS ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+/* ── STAT STRIP ── */
+.stat-strip {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.stat-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 14px;
+  position: relative;
+  overflow: hidden;
+}
+.stat-box::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+}
+.s1::after { background: var(--accent); }
+.s2::after { background: var(--accent2); }
+.s3::after { background: var(--accent3); }
+.s4::after { background: var(--warning); }
+.stat-num {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1;
+}
+.s1 .stat-num { color: var(--accent); }
+.s2 .stat-num { color: var(--accent2); }
+.s3 .stat-num { color: var(--accent3); }
+.s4 .stat-num { color: var(--warning); }
+.stat-lbl { font-size: 11px; color: var(--text3); margin-top: 5px; letter-spacing: 0.5px; }
+
+/* ── REMINDER ROWS ── */
+.rem-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+.rem-row:last-child { border-bottom: none; padding-bottom: 0; }
+.rem-row:first-child { padding-top: 0; }
+
+.check-circle {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  flex-shrink: 0;
+  margin-top: 1px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  color: transparent;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.check-circle:active { transform: scale(0.9); }
+.check-circle.done { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+
+.rem-info { flex: 1; min-width: 0; }
+.rem-title { font-size: 14px; font-weight: 500; margin-bottom: 5px; }
+.rem-title.done { text-decoration: line-through; color: var(--text3); }
+.rem-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.rem-meta span { font-size: 11px; color: var(--text2); display: flex; align-items: center; gap: 3px; }
+.overdue-txt { color: var(--danger) !important; }
+
+.recur-pill {
+  background: rgba(96,200,245,0.12);
+  color: var(--accent2);
+  border-radius: 8px;
+  padding: 2px 7px;
+  font-size: 10px;
+}
+
+.priority-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.p-high { background: var(--danger); }
+.p-med  { background: var(--warning); }
+.p-low  { background: var(--success); }
+
+.delete-btn {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text3);
+  font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.delete-btn:active { background: rgba(255,96,96,0.15); color: var(--danger); }
+
+/* ── TAGS ── */
+.tag {
+  display: inline-flex; align-items: center;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+}
+.tag-health   { background: rgba(96,245,166,0.12); color: var(--success); }
+.tag-work     { background: rgba(96,200,245,0.12); color: var(--accent2); }
+.tag-personal { background: rgba(245,96,200,0.12); color: var(--accent3); }
+.tag-finance  { background: rgba(245,166,35,0.12);  color: var(--warning); }
+.tag-other    { background: rgba(144,144,160,0.12); color: var(--text2); }
+
+/* ── NOTES ── */
+.note-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  -webkit-user-select: none;
+}
+.note-card:active { border-color: var(--accent); background: var(--surface2); }
+.note-card-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+.note-card-preview { font-size: 12px; color: var(--text2); line-height: 1.6; margin-bottom: 10px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.note-card-footer { display: flex; align-items: center; justify-content: space-between; }
+.note-date { font-size: 11px; color: var(--text3); }
+
+/* ── SEARCH ── */
+.search-wrap {
+  position: relative;
+  margin-bottom: 14px;
+}
+.search-wrap input {
+  padding-left: 40px;
+}
+.search-icon {
+  position: absolute;
+  left: 13px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 15px;
+  pointer-events: none;
+}
+
+/* ── AI SEARCH BOX ── */
+.ai-box {
+  background: var(--surface);
+  border: 1px solid rgba(96,200,245,0.25);
+  border-radius: var(--r);
+  padding: 14px;
+  margin-bottom: 16px;
+}
+.ai-box-header {
+  font-size: 11px;
+  color: var(--accent2);
+  letter-spacing: 0.8px;
+  margin-bottom: 10px;
+  display: flex; align-items: center; gap: 6px;
+}
+.ai-row { display: flex; gap: 8px; }
+.ai-row input { flex: 1; }
+.ai-result {
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--surface2);
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  line-height: 1.7;
+  border-left: 3px solid var(--accent2);
+}
+.ai-loading {
+  margin-top: 12px;
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--text2);
+}
+.spinner {
+  width: 14px; height: 14px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent2);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── FILTER CHIPS ── */
+.chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 14px;
+  scrollbar-width: none;
+}
+.chips::-webkit-scrollbar { display: none; }
+.chip {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  color: var(--text2);
+  background: transparent;
+  font-family: 'Courier New', Courier, monospace;
+  transition: all 0.15s;
+  -webkit-user-select: none;
+}
+.chip.active { border-color: var(--accent); color: var(--accent); background: rgba(200,245,96,0.08); }
+.chip:active { opacity: 0.7; }
+
+/* ── TABS (reminders) ── */
+.seg-tabs {
+  display: flex;
+  gap: 0;
+  background: var(--surface2);
+  border-radius: var(--r-sm);
+  padding: 3px;
+  margin-bottom: 18px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.seg-tabs::-webkit-scrollbar { display: none; }
+.seg-tab {
+  flex: 1;
+  min-width: 60px;
+  text-align: center;
+  padding: 8px 10px;
+  border-radius: 7px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text2);
+  white-space: nowrap;
+  transition: all 0.15s;
+  -webkit-user-select: none;
+}
+.seg-tab.active { background: var(--surface3); color: var(--text); }
+
+/* ── FORMS ── */
+.form-group { margin-bottom: 14px; }
+label {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 5px;
+}
+input, textarea, select {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--text);
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 15px;
+  padding: 12px 14px;
+  outline: none;
+  transition: border-color 0.15s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(200,245,96,0.08);
+}
+select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a5a6a' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+textarea { resize: none; min-height: 100px; }
+.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 14px 20px;
+  border-radius: var(--r-sm);
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none; outline: none;
+  transition: opacity 0.15s, transform 0.1s;
+  -webkit-user-select: none;
+}
+.btn:active { opacity: 0.8; transform: scale(0.98); }
+.btn-primary { background: var(--accent); color: var(--bg); width: 100%; }
+.btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+.btn-danger { background: transparent; color: var(--danger); border: 1px solid rgba(255,96,96,0.3); }
+.btn-sm { padding: 9px 14px; font-size: 13px; }
+
+/* ── MODAL / SHEET ── */
+.sheet-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 50;
+  display: none;
+  align-items: flex-end;
+}
+.sheet-overlay.open { display: flex; }
+
+.sheet {
+  background: var(--surface);
+  border-radius: 20px 20px 0 0;
+  border-top: 1px solid var(--border);
+  width: 100%;
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: 0 20px 20px;
+  padding-bottom: calc(20px + var(--safe-bottom));
+  animation: sheetUp 0.25s cubic-bezier(0.32,0.72,0,1);
+}
+@keyframes sheetUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.sheet-handle {
+  width: 36px; height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin: 12px auto 20px;
+}
+.sheet-title {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 20px;
+}
+
+/* ── TOAST ── */
+.toast-area {
+  position: fixed;
+  top: calc(var(--header-h) + var(--safe-top) + 10px);
+  left: 16px; right: 16px;
+  z-index: 100;
+  display: flex; flex-direction: column; gap: 8px;
+  pointer-events: none;
+}
+.toast {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 12px 16px;
+  font-size: 13px;
+  display: flex; align-items: center; gap: 10px;
+  animation: toastIn 0.2s ease;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(-10px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.toast-ok  { border-left: 3px solid var(--success); }
+.toast-err { border-left: 3px solid var(--danger); }
+
+/* ── EMPTY STATE ── */
+.empty {
+  text-align: center;
+  padding: 50px 20px;
+  color: var(--text3);
+}
+.empty .e-ico { font-size: 44px; margin-bottom: 12px; }
+.empty p { font-size: 13px; line-height: 1.7; }
+
+/* ── FAB ── */
+.fab {
+  position: fixed;
+  right: 20px;
+  bottom: calc(var(--tab-h) + var(--safe-bottom) + 16px);
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--bg);
+  font-size: 26px;
+  font-weight: 300;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 20px rgba(200,245,96,0.35);
+  cursor: pointer;
+  z-index: 9;
+  transition: transform 0.15s, box-shadow 0.15s;
+  -webkit-user-select: none;
+  border: none;
+}
+.fab:active { transform: scale(0.93); box-shadow: 0 2px 10px rgba(200,245,96,0.2); }
+
+/* ── NOTIF TOGGLES ── */
+.toggle-row {
+  display: flex; align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+  font-size: 14px;
+}
+.toggle-row:last-child { border-bottom: none; }
+.toggle-switch {
+  margin-left: auto;
+  width: 48px; height: 28px;
+  position: relative;
+  flex-shrink: 0;
+}
+.toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+.toggle-track {
+  position: absolute; inset: 0;
+  background: var(--surface3);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: 0.2s;
+  border: 1px solid var(--border);
+}
+.toggle-track::before {
+  content: '';
+  position: absolute;
+  width: 20px; height: 20px;
+  left: 3px; top: 3px;
+  background: var(--text2);
+  border-radius: 50%;
+  transition: 0.2s;
+}
+.toggle-switch input:checked ~ .toggle-track { background: rgba(200,245,96,0.2); border-color: var(--accent); }
+.toggle-switch input:checked ~ .toggle-track::before { transform: translateX(20px); background: var(--accent); }
+
+/* ── NOTIF SCHEDULE ── */
+.sched-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.sched-row:last-child { border-bottom: none; }
+.time-pill {
+  background: rgba(200,245,96,0.1);
+  color: var(--accent);
+  border: 1px solid rgba(200,245,96,0.2);
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 12px;
+  min-width: 52px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* ── PULSE ── */
+@keyframes pulse {
+  0%,100% { opacity:1; transform:scale(1); }
+  50%      { opacity:.5; transform:scale(1.4); }
+}
+.pulse-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: pulse 2s infinite;
+  display: inline-block;
+}
+
+/* ── HIGHLIGHT ── */
+mark { background: rgba(200,245,96,0.22); color: var(--accent); border-radius: 2px; padding: 0 2px; }
+
+/* scrollbar hide */
+::-webkit-scrollbar { display: none; }
+* { scrollbar-width: none; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="logo">Brain<span>Base</span></div>
+    <div class="top-bar-right">
+      <div class="clock" id="clock">—</div>
+      <div id="notif-status-dot" style="display:none;align-items:center;gap:5px;font-size:11px;color:var(--success)">
+        <span class="pulse-dot"></span>
+      </div>
+      <div class="bell-btn" onclick="goDue()">
+        🔔
+        <div class="bell-badge" id="bell-badge">0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGES SCROLL AREA -->
+  <div class="scroll-area" id="scroll-area">
+
+    <!-- ── DASHBOARD ── -->
+    <div class="page active" id="page-home">
+      <div class="page-title">Good <span id="greeting">day</span> ✦</div>
+      <div class="page-subtitle" id="today-date">—</div>
+
+      <div class="stat-strip">
+        <div class="stat-box s1">
+          <div class="stat-num" id="st-today">0</div>
+          <div class="stat-lbl">due today</div>
+        </div>
+        <div class="stat-box s4">
+          <div class="stat-num" id="st-overdue">0</div>
+          <div class="stat-lbl">overdue</div>
+        </div>
+        <div class="stat-box s2">
+          <div class="stat-num" id="st-active">0</div>
+          <div class="stat-lbl">active tasks</div>
+        </div>
+        <div class="stat-box s3">
+          <div class="stat-num" id="st-notes">0</div>
+          <div class="stat-lbl">notes</div>
+        </div>
+      </div>
+
+      <div class="section-label">📅 Today's Reminders</div>
+      <div class="card" id="dash-rems"><div class="empty"><div class="e-ico">✅</div><p>All clear!</p></div></div>
+
+      <div class="section-label">📝 Recent Notes</div>
+      <div id="dash-notes-list"></div>
+    </div>
+
+    <!-- ── REMINDERS ── -->
+    <div class="page" id="page-reminders">
+      <div class="page-title">Reminders</div>
+      <div class="page-subtitle">Tasks, events & habits</div>
+
+      <div class="seg-tabs" id="rem-tabs">
+        <div class="seg-tab active" onclick="setRemTab('all',this)">All</div>
+        <div class="seg-tab" onclick="setRemTab('today',this)">Today</div>
+        <div class="seg-tab" onclick="setRemTab('upcoming',this)">Upcoming</div>
+        <div class="seg-tab" onclick="setRemTab('recurring',this)">Recurring</div>
+        <div class="seg-tab" onclick="setRemTab('done',this)">Done</div>
+      </div>
+
+      <div id="rem-list"></div>
+    </div>
+
+    <!-- ── NOTES ── -->
+    <div class="page" id="page-notes">
+      <div class="page-title">Life Notes</div>
+      <div class="page-subtitle">Searchable memory</div>
+
+      <div class="ai-box">
+        <div class="ai-box-header">✦ AI Smart Search</div>
+        <div class="ai-row">
+          <input type="text" id="ai-input" placeholder="Ask anything about your notes…" style="font-size:14px">
+          <button class="btn btn-secondary btn-sm" onclick="doAi()" style="white-space:nowrap;width:auto">Ask</button>
+        </div>
+        <div id="ai-out"></div>
+      </div>
+
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="kw-search" placeholder="Search by keyword…" oninput="renderNotes()">
+      </div>
+
+      <div class="chips" id="cat-chips">
+        <button class="chip active" onclick="setCat('all',this)">All</button>
+        <button class="chip" onclick="setCat('health',this)">🏥 Health</button>
+        <button class="chip" onclick="setCat('work',this)">💼 Work</button>
+        <button class="chip" onclick="setCat('personal',this)">💭 Personal</button>
+        <button class="chip" onclick="setCat('finance',this)">💰 Finance</button>
+        <button class="chip" onclick="setCat('other',this)">📌 Other</button>
+      </div>
+
+      <div id="notes-list"></div>
+    </div>
+
+    <!-- ── NOTIFICATIONS ── -->
+    <div class="page" id="page-notifs">
+      <div class="page-title">Notifications</div>
+      <div class="page-subtitle">Phone alerts</div>
+
+      <div class="card" id="notif-perm-card" style="margin-bottom:16px;border-color:rgba(200,245,96,0.2)">
+        <div id="notif-perm-ui"></div>
+      </div>
+
+      <div class="section-label">How to get phone alerts</div>
+      <div class="card" style="margin-bottom:16px">
+        <div style="font-size:13px;color:var(--text2);line-height:1.8">
+          <div style="margin-bottom:10px">1️⃣ <strong style="color:var(--text)">Tap "Enable Now"</strong> above and allow when prompted.</div>
+          <div style="margin-bottom:10px">2️⃣ <strong style="color:var(--text)">Add to Home Screen</strong> — tap your browser's Share button → "Add to Home Screen" for background notifications.</div>
+          <div>3️⃣ Alerts fire at reminder time, with your chosen advance notice.</div>
+        </div>
+      </div>
+
+      <div class="section-label">Alert types</div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="toggle-row">📋 Tasks <label class="toggle-switch"><input type="checkbox" id="nt-tasks" checked onchange="saveNP()"><span class="toggle-track"></span></label></div>
+        <div class="toggle-row">📅 Events <label class="toggle-switch"><input type="checkbox" id="nt-events" checked onchange="saveNP()"><span class="toggle-track"></span></label></div>
+        <div class="toggle-row">💊 Medication <label class="toggle-switch"><input type="checkbox" id="nt-medication" checked onchange="saveNP()"><span class="toggle-track"></span></label></div>
+        <div class="toggle-row">🔄 Habits <label class="toggle-switch"><input type="checkbox" id="nt-habits" checked onchange="saveNP()"><span class="toggle-track"></span></label></div>
+        <div class="toggle-row">🏥 Appointments <label class="toggle-switch"><input type="checkbox" id="nt-appointments" checked onchange="saveNP()"><span class="toggle-track"></span></label></div>
+        <div class="toggle-row">⚠️ Overdue <label class="toggle-switch"><input type="checkbox" id="nt-overdue" checked onchange="saveNP()"><span class="toggle-track"></span></label></div>
+      </div>
+
+      <div class="section-label">Advance notice</div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="form-group" style="margin-bottom:0">
+          <label>Notify me this early</label>
+          <select id="nt-lead" onchange="saveNP()">
+            <option value="0">At exact time</option>
+            <option value="5" selected>5 min before</option>
+            <option value="10">10 min before</option>
+            <option value="15">15 min before</option>
+            <option value="30">30 min before</option>
+            <option value="60">1 hour before</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="section-label">Scheduled today</div>
+      <div class="card"><div id="sched-list"></div></div>
+    </div>
+
+    <!-- ── SETTINGS ── -->
+    <div class="page" id="page-settings">
+      <div class="page-title">Settings</div>
+      <div class="page-subtitle">Data & preferences</div>
+
+      <div class="section-label">Data</div>
+      <div class="card" style="margin-bottom:12px">
+        <div style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.7">Your data is stored locally in your browser. Export regularly to back it up.</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <button class="btn btn-secondary" onclick="exportData()">📤 Export backup</button>
+          <button class="btn btn-secondary" onclick="importData()">📥 Import backup</button>
+        </div>
+      </div>
+      <div class="card">
+        <button class="btn btn-danger" style="width:100%" onclick="clearAll()">🗑️ Clear all data</button>
+      </div>
+    </div>
+
+  </div><!-- /scroll-area -->
+
+  <!-- BOTTOM TAB BAR -->
+  <div class="tab-bar">
+    <div class="tab active" id="tab-home" onclick="goPage('home',this)">
+      <div class="tab-icon">⚡</div>
+      <div class="tab-label">Home</div>
+    </div>
+    <div class="tab" id="tab-reminders" onclick="goPage('reminders',this)">
+      <div class="tab-icon">🔔</div>
+      <div class="tab-label">Reminders</div>
+      <div class="tab-dot" id="tdot-reminders"></div>
+    </div>
+    <div class="tab" id="tab-notes" onclick="goPage('notes',this)">
+      <div class="tab-icon">📝</div>
+      <div class="tab-label">Notes</div>
+    </div>
+    <div class="tab" id="tab-notifs" onclick="goPage('notifs',this)">
+      <div class="tab-icon">📳</div>
+      <div class="tab-label">Alerts</div>
+    </div>
+    <div class="tab" id="tab-settings" onclick="goPage('settings',this)">
+      <div class="tab-icon">⚙️</div>
+      <div class="tab-label">Settings</div>
+    </div>
+  </div>
+
+  <!-- FAB -->
+  <button class="fab" id="fab" onclick="openFab()">＋</button>
+
+</div><!-- /app -->
+
+<!-- ── SHEET: ADD REMINDER ── -->
+<div class="sheet-overlay" id="sheet-reminder" onclick="closeSheet('sheet-reminder',event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">New Reminder</div>
+    <div class="form-group">
+      <label>Title *</label>
+      <input type="text" id="r-title" placeholder="e.g. Take medication, Dentist…">
+    </div>
+    <div class="form-group">
+      <label>Notes</label>
+      <textarea id="r-notes" rows="2" placeholder="Optional details…"></textarea>
+    </div>
+    <div class="row-2">
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="r-date">
+      </div>
+      <div class="form-group">
+        <label>Time</label>
+        <input type="time" id="r-time">
+      </div>
+    </div>
+    <div class="row-2">
+      <div class="form-group">
+        <label>Type</label>
+        <select id="r-type" onchange="toggleRecur()">
+          <option value="task">📋 Task</option>
+          <option value="event">📅 Event</option>
+          <option value="habit">🔄 Habit</option>
+          <option value="medication">💊 Medication</option>
+          <option value="appointment">🏥 Appointment</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Priority</label>
+        <select id="r-priority">
+          <option value="medium">Medium</option>
+          <option value="high">🔴 High</option>
+          <option value="low">🟢 Low</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" id="recur-row" style="display:none">
+      <label>Repeat</label>
+      <select id="r-recur">
+        <option value="daily">Daily</option>
+        <option value="weekdays">Weekdays</option>
+        <option value="weekly">Weekly</option>
+        <option value="monthly">Monthly</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Category</label>
+      <select id="r-cat">
+        <option value="personal">Personal</option>
+        <option value="health">Health</option>
+        <option value="work">Work</option>
+        <option value="finance">Finance</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="saveReminder()">Save Reminder</button>
+  </div>
+</div>
+
+<!-- ── SHEET: ADD NOTE ── -->
+<div class="sheet-overlay" id="sheet-note" onclick="closeSheet('sheet-note',event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">New Note</div>
+    <div class="form-group">
+      <label>Title *</label>
+      <input type="text" id="n-title" placeholder="e.g. Doctor visit, Project idea…">
+    </div>
+    <div class="form-group">
+      <label>Content</label>
+      <textarea id="n-content" rows="5" placeholder="Write anything…"></textarea>
+    </div>
+    <div class="row-2">
+      <div class="form-group">
+        <label>Category</label>
+        <select id="n-cat">
+          <option value="personal">Personal</option>
+          <option value="health">Health</option>
+          <option value="work">Work</option>
+          <option value="finance">Finance</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Tags (comma sep.)</label>
+        <input type="text" id="n-tags" placeholder="doctor, idea…">
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="saveNote()">Save Note</button>
+  </div>
+</div>
+
+<!-- ── SHEET: VIEW NOTE ── -->
+<div class="sheet-overlay" id="sheet-view-note" onclick="closeSheet('sheet-view-note',event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="vn-title">Note</div>
+    <div id="vn-meta" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px"></div>
+    <div id="vn-content" style="font-size:14px;line-height:1.8;white-space:pre-wrap;color:var(--text)"></div>
+    <div style="margin-top:24px;display:flex;gap:10px">
+      <button class="btn btn-danger btn-sm" style="width:auto" id="vn-delete">Delete</button>
+      <button class="btn btn-secondary btn-sm" style="flex:1" onclick="closeSheet('sheet-view-note')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── FAB CHOOSER ── -->
+<div class="sheet-overlay" id="sheet-fab" onclick="closeSheet('sheet-fab',event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Add New</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button class="btn btn-secondary" style="justify-content:flex-start;gap:14px;font-size:15px" onclick="closeSheet('sheet-fab');setTimeout(()=>openSheet('sheet-reminder'),50)">
+        🔔 <span>New Reminder</span>
+      </button>
+      <button class="btn btn-secondary" style="justify-content:flex-start;gap:14px;font-size:15px" onclick="closeSheet('sheet-fab');setTimeout(()=>openSheet('sheet-note'),50)">
+        📝 <span>New Note</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TOASTS -->
+<div class="toast-area" id="toasts"></div>
+
+<script>
+// ── DATA ──
+let reminders = JSON.parse(localStorage.getItem('bb_rem') || '[]');
+let notes     = JSON.parse(localStorage.getItem('bb_notes') || '[]');
+let np = JSON.parse(localStorage.getItem('bb_np') || JSON.stringify({tasks:true,events:true,medication:true,habits:true,appointments:true,overdue:true,lead:5}));
+let fired = JSON.parse(localStorage.getItem('bb_fired') || '{}');
+let notifTimer = null;
+let currentPage = 'home';
+let currentRemTab = 'all';
+let currentCat = 'all';
+
+function persist() {
+  localStorage.setItem('bb_rem', JSON.stringify(reminders));
+  localStorage.setItem('bb_notes', JSON.stringify(notes));
+}
+
+// ── CLOCK ──
+function tick() {
+  const n = new Date();
+  const p = x => String(x).padStart(2,'0');
+  document.getElementById('clock').textContent = `${p(n.getHours())}:${p(n.getMinutes())}`;
+  const h = n.getHours();
+  document.getElementById('greeting').textContent = h<12?'morning':h<17?'afternoon':'evening';
+  const D=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('today-date').textContent = `${D[n.getDay()]}, ${M[n.getMonth()]} ${n.getDate()}, ${n.getFullYear()}`;
+}
+setInterval(tick,10000); tick();
+document.getElementById('r-date').valueAsDate = new Date();
+
+// ── NAV ──
+function goPage(name, el) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  (el || document.getElementById('tab-'+name)).classList.add('active');
+  document.getElementById('scroll-area').scrollTop = 0;
+  currentPage = name;
+  if(name==='home') renderHome();
+  if(name==='reminders') renderReminders();
+  if(name==='notes') renderNotes();
+  if(name==='notifs') { updateNotifUI(); loadNP(); renderSched(); }
+}
+
+function goDue() {
+  goPage('reminders', document.getElementById('tab-reminders'));
+  setRemTab('today', document.querySelector('.seg-tab:nth-child(2)'));
+}
+
+// ── FAB ──
+function openFab() { openSheet('sheet-fab'); }
+
+// ── SHEETS ──
+function openSheet(id) {
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeSheet(id, e) {
+  if(e && e.target !== document.getElementById(id)) return;
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ── TOGGLE RECUR ──
+function toggleRecur() {
+  const t = document.getElementById('r-type').value;
+  document.getElementById('recur-row').style.display = (t==='habit'||t==='medication')?'block':'none';
+}
+
+// ── SAVE REMINDER ──
+function saveReminder() {
+  const title = document.getElementById('r-title').value.trim();
+  if(!title) { toast('Enter a title','err'); return; }
+  const t = document.getElementById('r-type').value;
+  const isRec = t==='habit'||t==='medication';
+  reminders.unshift({
+    id: Date.now()+'',
+    title,
+    notes: document.getElementById('r-notes').value.trim(),
+    date:  document.getElementById('r-date').value,
+    time:  document.getElementById('r-time').value,
+    type: t,
+    priority: document.getElementById('r-priority').value,
+    category: document.getElementById('r-cat').value,
+    recurring: isRec ? document.getElementById('r-recur').value : null,
+    completed: false,
+    createdAt: new Date().toISOString()
+  });
+  persist();
+  closeSheet('sheet-reminder');
+  toast('Reminder saved 🔔');
+  renderHome(); renderReminders(); updateCounts();
+  // Reset
+  document.getElementById('r-title').value='';
+  document.getElementById('r-notes').value='';
+  document.getElementById('r-time').value='';
+}
+
+// ── SAVE NOTE ──
+function saveNote() {
+  const title = document.getElementById('n-title').value.trim();
+  if(!title) { toast('Enter a title','err'); return; }
+  notes.unshift({
+    id: Date.now()+'',
+    title,
+    content: document.getElementById('n-content').value.trim(),
+    category: document.getElementById('n-cat').value,
+    tags: document.getElementById('n-tags').value.split(',').map(t=>t.trim()).filter(Boolean),
+    createdAt: new Date().toISOString()
+  });
+  persist();
+  closeSheet('sheet-note');
+  toast('Note saved 📝');
+  renderHome(); renderNotes(); updateCounts();
+  document.getElementById('n-title').value='';
+  document.getElementById('n-content').value='';
+  document.getElementById('n-tags').value='';
+}
+
+// ── TOGGLE / DELETE ──
+function toggleRem(id) {
+  const r = reminders.find(r=>r.id===id);
+  if(r){ r.completed=!r.completed; persist(); renderHome(); renderReminders(); updateCounts(); }
+}
+function deleteRem(id) {
+  reminders = reminders.filter(r=>r.id!==id);
+  persist(); renderHome(); renderReminders(); updateCounts(); toast('Deleted');
+}
+function deleteNote(id) {
+  notes = notes.filter(n=>n.id!==id);
+  persist(); renderHome(); renderNotes(); updateCounts();
+  closeSheet('sheet-view-note'); toast('Note deleted');
+}
+
+// ── DATE HELPERS ──
+function todayStr() { return new Date().toISOString().slice(0,10); }
+function isOverdue(r) { return !r.completed && !r.recurring && r.date && r.date < todayStr(); }
+function fmtDate(d) {
+  if(!d) return '—';
+  const x=new Date(d+'T00:00:00');
+  return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][x.getMonth()]+' '+x.getDate();
+}
+function typeEmoji(t) { return {task:'📋',event:'📅',habit:'🔄',medication:'💊',appointment:'🏥'}[t]||'📌'; }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function hl(t,q) {
+  if(!q) return t;
+  return t.replace(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi'), '<mark>$1</mark>');
+}
+
+// ── RENDER REMINDER ROW ──
+function remRowHTML(r) {
+  const od = isOverdue(r);
+  return `<div class="rem-row">
+    <div class="check-circle ${r.completed?'done':''}" onclick="toggleRem('${r.id}')">
+      ${r.completed?'✓':''}
+    </div>
+    <div class="rem-info">
+      <div class="rem-title ${r.completed?'done':''}">${typeEmoji(r.type)} ${esc(r.title)}</div>
+      <div class="rem-meta">
+        <span><span class="priority-dot ${r.priority==='high'?'p-high':r.priority==='low'?'p-low':'p-med'}"></span></span>
+        <span class="${od?'overdue-txt':''}">${od?'⚠️ Overdue':'📅 '+fmtDate(r.date)}${r.time?' · '+r.time:''}</span>
+        ${r.recurring?`<span class="recur-pill">🔄 ${r.recurring}</span>`:''}
+        <span class="tag tag-${r.category}">${r.category}</span>
+      </div>
+      ${r.notes?`<div style="font-size:12px;color:var(--text2);margin-top:5px">${esc(r.notes)}</div>`:''}
+    </div>
+    <button class="delete-btn" onclick="deleteRem('${r.id}')">✕</button>
+  </div>`;
+}
+
+// ── RENDER HOME ──
+function renderHome() {
+  const td = todayStr();
+  const todayRems = reminders.filter(r=>!r.completed&&(r.date===td||r.recurring));
+  const overdue = reminders.filter(isOverdue);
+  document.getElementById('st-today').textContent   = todayRems.length;
+  document.getElementById('st-overdue').textContent = overdue.length;
+  document.getElementById('st-active').textContent  = reminders.filter(r=>!r.completed).length;
+  document.getElementById('st-notes').textContent   = notes.length;
+
+  const all = [...overdue, ...todayRems.filter(r=>!overdue.includes(r))].slice(0,5);
+  document.getElementById('dash-rems').innerHTML = all.length
+    ? all.map(remRowHTML).join('')
+    : '<div class="empty"><div class="e-ico">✅</div><p>All clear for today!</p></div>';
+
+  const recentNotes = notes.slice(0,3);
+  document.getElementById('dash-notes-list').innerHTML = recentNotes.length
+    ? recentNotes.map(n=>`
+        <div class="note-card" onclick="viewNote('${n.id}')">
+          <div class="note-card-title">${esc(n.title)}</div>
+          <div class="note-card-preview">${esc(n.content||'No content')}</div>
+          <div class="note-card-footer">
+            <span class="tag tag-${n.category}">${n.category}</span>
+            <span class="note-date">${new Date(n.createdAt).toLocaleDateString()}</span>
+          </div>
+        </div>`).join('')
+    : '<div class="empty"><div class="e-ico">🧠</div><p>No notes yet</p></div>';
+}
+
+// ── RENDER REMINDERS ──
+function setRemTab(name, el) {
+  currentRemTab = name;
+  document.querySelectorAll('.seg-tab').forEach(t=>t.classList.remove('active'));
+  if(el) el.classList.add('active');
+  renderReminders();
+}
+
+function renderReminders() {
+  const td = todayStr();
+  let list = [...reminders];
+  if(currentRemTab==='today')    list = list.filter(r=>!r.completed&&(r.date===td||r.recurring));
+  else if(currentRemTab==='upcoming') list = list.filter(r=>!r.completed&&r.date>td);
+  else if(currentRemTab==='recurring') list = list.filter(r=>!!r.recurring);
+  else if(currentRemTab==='done') list = list.filter(r=>r.completed);
+  else list.sort((a,b)=>{ if(isOverdue(a)&&!isOverdue(b))return -1; if(!isOverdue(a)&&isOverdue(b))return 1; return 0; });
+
+  document.getElementById('rem-list').innerHTML = list.length
+    ? list.map(remRowHTML).join('')
+    : '<div class="empty"><div class="e-ico">🎉</div><p>Nothing here!</p></div>';
+}
+
+// ── RENDER NOTES ──
+function setCat(cat, el) {
+  currentCat = cat;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderNotes();
+}
+
+function renderNotes() {
+  const q = (document.getElementById('kw-search')?.value||'').toLowerCase();
+  let list = [...notes];
+  if(currentCat!=='all') list = list.filter(n=>n.category===currentCat);
+  if(q) list = list.filter(n=>n.title.toLowerCase().includes(q)||n.content.toLowerCase().includes(q)||(n.tags||[]).some(t=>t.toLowerCase().includes(q)));
+
+  document.getElementById('notes-list').innerHTML = list.length
+    ? list.map(n=>`
+        <div class="note-card" onclick="viewNote('${n.id}')">
+          <div class="note-card-title">${hl(esc(n.title),q)}</div>
+          <div class="note-card-preview">${hl(esc(n.content||'No content'),q)}</div>
+          <div class="note-card-footer">
+            <div style="display:flex;gap:5px;flex-wrap:wrap">
+              <span class="tag tag-${n.category}">${n.category}</span>
+              ${(n.tags||[]).map(t=>`<span class="tag tag-other">#${esc(t)}</span>`).join('')}
+            </div>
+            <span class="note-date">${new Date(n.createdAt).toLocaleDateString()}</span>
+          </div>
+        </div>`).join('')
+    : '<div class="empty"><div class="e-ico">🔍</div><p>No notes found</p></div>';
+}
+
+function viewNote(id) {
+  const n = notes.find(n=>n.id===id);
+  if(!n) return;
+  document.getElementById('vn-title').textContent = n.title;
+  document.getElementById('vn-content').textContent = n.content||'No content';
+  document.getElementById('vn-meta').innerHTML = `
+    <span class="tag tag-${n.category}">${n.category}</span>
+    ${(n.tags||[]).map(t=>`<span class="tag tag-other">#${esc(t)}</span>`).join('')}
+    <span style="font-size:11px;color:var(--text3)">${new Date(n.createdAt).toLocaleString()}</span>`;
+  document.getElementById('vn-delete').onclick = ()=>deleteNote(id);
+  openSheet('sheet-view-note');
+}
+
+// ── AI SEARCH ──
+document.getElementById('ai-input').addEventListener('keydown', e=>{ if(e.key==='Enter') doAi(); });
+
+async function doAi() {
+  const q = document.getElementById('ai-input').value.trim();
+  if(!q) return;
+  if(!notes.length){ document.getElementById('ai-out').innerHTML='<div class="ai-result">No notes yet!</div>'; return; }
+  document.getElementById('ai-out').innerHTML = '<div class="ai-loading"><div class="spinner"></div> Searching…</div>';
+  const ctx = notes.map((n,i)=>`[Note ${i+1}: "${n.title}" | ${n.category} | ${new Date(n.createdAt).toLocaleDateString()} | Tags: ${(n.tags||[]).join(', ')||'none'}]\n${n.content}`).join('\n\n---\n\n');
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000,
+        system:'You are a personal assistant. Search through the user\'s notes and answer concisely. Reference note titles when relevant.',
+        messages:[{role:'user', content:`My notes:\n\n${ctx}\n\n---\n\nQuestion: ${q}`}]})
+    });
+    const d = await res.json();
+    document.getElementById('ai-out').innerHTML = `<div class="ai-result">✦ ${d.content?.[0]?.text||'No answer found.'}</div>`;
+  } catch {
+    document.getElementById('ai-out').innerHTML = '<div class="ai-result" style="color:var(--danger)">Search unavailable. Try keyword search.</div>';
+  }
+}
+
+// ── COUNTS & BADGE ──
+function updateCounts() {
+  const td = todayStr();
+  const due = reminders.filter(r=>!r.completed&&(r.date===td||isOverdue(r)||r.recurring)).length;
+  const badge = document.getElementById('bell-badge');
+  if(due>0){ badge.style.display='flex'; badge.textContent=due; }
+  else badge.style.display='none';
+  const dot = document.getElementById('tdot-reminders');
+  dot.classList.toggle('show', due>0);
+}
+
+// ── NOTIFICATIONS ──
+function saveNP() {
+  np = {
+    tasks:        document.getElementById('nt-tasks').checked,
+    events:       document.getElementById('nt-events').checked,
+    medication:   document.getElementById('nt-medication').checked,
+    habits:       document.getElementById('nt-habits').checked,
+    appointments: document.getElementById('nt-appointments').checked,
+    overdue:      document.getElementById('nt-overdue').checked,
+    lead: parseInt(document.getElementById('nt-lead').value)
+  };
+  localStorage.setItem('bb_np', JSON.stringify(np));
+  toast('Saved ✓');
+}
+
+function loadNP() {
+  ['tasks','events','medication','habits','appointments','overdue'].forEach(k=>{
+    const el = document.getElementById('nt-'+k);
+    if(el) el.checked = np[k];
+  });
+  const le = document.getElementById('nt-lead');
+  if(le) le.value = np.lead;
+}
+
+async function requestNotif() {
+  if(!('Notification' in window)){ toast('Not supported in this browser','err'); return; }
+  const p = await Notification.requestPermission();
+  updateNotifUI();
+  if(p==='granted'){ toast('Notifications enabled 🔔'); startChecker(); sendTest(); }
+  else toast('Notifications blocked','err');
+}
+
+function updateNotifUI() {
+  const el = document.getElementById('notif-perm-ui');
+  const dot = document.getElementById('notif-status-dot');
+  if(!el) return;
+  if(!('Notification' in window)) {
+    el.innerHTML='<p style="color:var(--danger);font-size:13px">⚠️ Not supported. Try Chrome or Safari.</p>';
+    return;
+  }
+  const p = Notification.permission;
+  if(p==='granted') {
+    dot.style.display='flex';
+    el.innerHTML=`<div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(96,245,166,0.08);border-radius:10px;border:1px solid rgba(96,245,166,0.2)">
+      <span style="font-size:28px">✅</span>
+      <div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--success)">Enabled</div><div style="font-size:12px;color:var(--text2)">Alerts will fire when reminders are due.</div></div>
+      <button class="btn btn-secondary btn-sm" onclick="sendTest()" style="width:auto">Test</button>
+    </div>`;
+  } else if(p==='denied') {
+    dot.style.display='none';
+    el.innerHTML=`<div style="padding:12px;background:rgba(255,96,96,0.08);border-radius:10px;border:1px solid rgba(255,96,96,0.2)">
+      <div style="font-size:14px;font-weight:600;color:var(--danger);margin-bottom:6px">🚫 Blocked</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.7">Go to browser site settings → change Notifications to "Allow" → reload.</div>
+    </div>`;
+  } else {
+    dot.style.display='none';
+    el.innerHTML=`<div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(200,245,96,0.06);border-radius:10px;border:1px solid rgba(200,245,96,0.15)">
+      <span style="font-size:28px">🔕</span>
+      <div style="flex:1"><div style="font-size:14px;font-weight:600">Not enabled</div><div style="font-size:12px;color:var(--text2)">Tap to receive alerts when reminders are due.</div></div>
+      <button class="btn btn-primary btn-sm" onclick="requestNotif()" style="width:auto;white-space:nowrap">Enable</button>
+    </div>`;
+  }
+  renderSched();
+}
+
+function sendTest() {
+  if(Notification.permission!=='granted') return;
+  new Notification('BrainBase ✦',{body:"Notifications are working! You'll get alerts like this."});
+}
+
+function fireNotif(r) {
+  if(Notification.permission!=='granted') return;
+  const e = typeEmoji(r.type);
+  const n = new Notification(`${e} ${r.title}`,{
+    body: r.notes||(r.time?`Scheduled for ${r.time}`:'Tap to view'),
+    tag: r.id,
+    requireInteraction: r.priority==='high'
+  });
+  n.onclick=()=>{ window.focus(); goPage('reminders'); n.close(); };
+}
+
+function checkRems() {
+  if(Notification.permission!=='granted') return;
+  const now = new Date();
+  const td = now.toISOString().slice(0,10);
+  const nowM = now.getHours()*60+now.getMinutes();
+  const lead = np.lead||0;
+  reminders.forEach(r=>{
+    if(r.completed) return;
+    const tk = r.type==='medication'?'medication':r.type==='appointment'?'appointments':r.recurring?'habits':r.type==='task'?'tasks':'events';
+    if(!np[tk]) return;
+    const relevant = r.date===td||r.recurring;
+    if(!relevant && !isOverdue(r)) return;
+    if(isOverdue(r) && np.overdue) {
+      const k=`od_${r.id}_${td}`;
+      if(!fired[k]) { fired[k]=true; localStorage.setItem('bb_fired',JSON.stringify(fired));
+        const n=new Notification(`⚠️ Overdue: ${r.title}`,{body:`From ${fmtDate(r.date)} — still pending.`,tag:'od_'+r.id,requireInteraction:true});
+        n.onclick=()=>{window.focus();goPage('reminders');n.close();}; }
+      return;
+    }
+    if(!r.time) return;
+    const [rh,rm]=r.time.split(':').map(Number);
+    const remM=rh*60+rm;
+    const targetM=remM-lead;
+    const k=`${r.id}_${td}_${remM}`;
+    if(nowM>=targetM && nowM<=targetM+1 && !fired[k]) {
+      fired[k]=true; localStorage.setItem('bb_fired',JSON.stringify(fired));
+      fireNotif(r);
+    }
+  });
+}
+
+function startChecker() {
+  if(notifTimer) clearInterval(notifTimer);
+  notifTimer = setInterval(checkRems, 30000);
+  checkRems();
+}
+
+function renderSched() {
+  const el = document.getElementById('sched-list');
+  if(!el) return;
+  const td = todayStr();
+  const list = reminders.filter(r=>!r.completed&&(r.date===td||r.recurring)&&r.time).sort((a,b)=>a.time.localeCompare(b.time));
+  if(!list.length) { el.innerHTML='<p style="font-size:13px;color:var(--text3);padding:8px 0">No timed reminders today.</p>'; return; }
+  el.innerHTML = list.map(r=>`
+    <div class="sched-row">
+      <span class="time-pill">${r.time}</span>
+      <span>${typeEmoji(r.type)} ${esc(r.title)}</span>
+      ${r.recurring?'<span class="recur-pill" style="margin-left:auto">🔄</span>':''}
+    </div>`).join('');
+}
+
+// ── EXPORT / IMPORT / CLEAR ──
+function exportData() {
+  const b=new Blob([JSON.stringify({reminders,notes},null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='brainbase.json'; a.click();
+  toast('Exported 📤');
+}
+function importData() {
+  const i=document.createElement('input'); i.type='file'; i.accept='.json';
+  i.onchange=e=>{ const r=new FileReader(); r.onload=ev=>{ try { const d=JSON.parse(ev.target.result); if(d.reminders)reminders=d.reminders; if(d.notes)notes=d.notes; persist(); renderHome(); updateCounts(); toast('Imported 📥'); } catch{ toast('Invalid file','err'); } }; r.readAsText(e.target.files[0]); };
+  i.click();
+}
+function clearAll() {
+  if(!confirm('Delete ALL data? Cannot be undone.')) return;
+  reminders=[]; notes=[]; persist(); renderHome(); updateCounts(); toast('Cleared');
+}
+
+// ── TOAST ──
+function toast(msg, type='ok') {
+  const el=document.createElement('div');
+  el.className=`toast toast-${type}`;
+  el.innerHTML=`<span>${type==='ok'?'✓':'!'}</span> ${msg}`;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(()=>el.remove(), 2800);
+}
+
+// ── INIT ──
+renderHome();
+updateCounts();
+updateNotifUI();
+if(typeof Notification!=='undefined'&&Notification.permission==='granted') startChecker();
+
+// Seed sample data
+if(!reminders.length && !notes.length) {
+  const td = todayStr();
+  reminders=[
+    {id:'r1',title:'Take morning medication',type:'medication',priority:'high',category:'health',date:td,time:'08:00',recurring:'daily',completed:false,notes:'',createdAt:new Date().toISOString()},
+    {id:'r2',title:'Dentist appointment',type:'appointment',priority:'high',category:'health',date:td,time:'14:30',recurring:null,completed:false,notes:'Dr. Smith — bring insurance card',createdAt:new Date().toISOString()},
+    {id:'r3',title:'Pay rent',type:'task',priority:'high',category:'finance',date:td,time:'',recurring:null,completed:false,notes:'',createdAt:new Date().toISOString()},
+    {id:'r4',title:'Evening walk',type:'habit',priority:'low',category:'health',date:td,time:'18:30',recurring:'daily',completed:false,notes:'',createdAt:new Date().toISOString()},
+  ];
+  notes=[
+    {id:'n1',title:'ADHD tips that work for me',category:'health',tags:['adhd','tips'],content:'Body doubling helps a lot — working alongside someone else (even virtually) keeps me on task.\n\nPomodoro timer (25 min work, 5 min break) works better than trying to work for hours.\n\nKeep phone in another room during focus time.',createdAt:new Date().toISOString()},
+    {id:'n2',title:'Doctor visit notes',category:'health',tags:['doctor','medication'],content:'Dr. Lee — increase water intake.\nNext appointment in 3 months.\nBlood pressure normal.\nRecommended vitamin D supplements.',createdAt:new Date().toISOString()},
+    {id:'n3',title:'Project ideas',category:'work',tags:['ideas'],content:'Build a habit tracker\nWeekly meal prep system\nLearn 5 new recipes this month',createdAt:new Date().toISOString()},
+  ];
+  persist(); renderHome(); updateCounts();
+}
+</script>
+</body>
+</html>
